@@ -73,6 +73,8 @@ bool UARTReader::fill_buffer() {
 }
 
 void UARTReader::init() {
+    reset_buffer();
+
     _fileHandle->set_blocking(false);
     _fileHandle->sigio(callback(this, &UARTReader::rx_irq));
 }
