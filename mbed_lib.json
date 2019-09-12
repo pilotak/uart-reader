@@ -1,0 +1,13 @@
+{
+    "name": "UARTReader",
+    "config": {
+        "buff_size": {
+            "help": "Size of receiver buffer",
+            "value": 128
+        },
+        "default_timeout": {
+            "help": "Defaut timeout between packets",
+            "value": 10
+        }
+    }
+}
