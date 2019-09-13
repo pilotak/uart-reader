@@ -33,7 +33,7 @@ class UARTReader {
     virtual ~UARTReader();
     void attach(Callback<void()> function);
     void init();
-    ssize_t read_bytes(uint8_t *buf, size_t len);
+    ssize_t read_bytes(char *buf, size_t len);
     void set_file_handle(FileHandle *fh);
     void set_timeout(uint32_t timeout);
 

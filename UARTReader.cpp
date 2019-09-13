@@ -116,10 +116,10 @@ void UARTReader::process() {
     _event_id = 0;
 }
 
-ssize_t UARTReader::read_bytes(uint8_t *buf, size_t len) {
+ssize_t UARTReader::read_bytes(char *buf, size_t len) {
     if (_recv_len > 0) {
         memcpy(buf, _recv_buff, (len > _recv_len ? _recv_len : len));
-        return _recv_len;
+        return (len > _recv_len ? _recv_len : len);
     }
 
     return 0;
