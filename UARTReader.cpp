@@ -45,7 +45,8 @@ UARTReader::~UARTReader() {
 
     set_file_handle(NULL);
 
-    if (_event_id != 0 && _queue.cancel(_event_id)) {
+    if (_event_id != 0) {
+        _queue.cancel(_event_id);
         _event_id = 0;
     }
 }
