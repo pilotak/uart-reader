@@ -29,7 +29,7 @@ SOFTWARE.
 
 class UARTReader {
   public:
-    UARTReader(FileHandle *fh, EventQueue &queue);
+    UARTReader(FileHandle *fh, EventQueue *queue);
     virtual ~UARTReader();
     void attach(Callback<void()> function);
     void init();
@@ -41,7 +41,7 @@ class UARTReader {
     FileHandle *_fileHandle;
 
   private:
-    EventQueue &_queue;
+    EventQueue *_queue;
     Callback<void()> _callback;
     char     _recv_buff[MBED_CONF_UARTREADER_BUFF_SIZE];
     int      _event_id;

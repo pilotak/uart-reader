@@ -25,7 +25,7 @@ SOFTWARE.
 #include "mbed.h"
 #include "UARTReader.h"
 
-UARTReader::UARTReader(FileHandle *fh, EventQueue &queue):
+UARTReader::UARTReader(FileHandle *fh, EventQueue *queue):
     _fileHandle(NULL),
     _queue(queue),
     _event_id(0),
@@ -46,7 +46,7 @@ UARTReader::~UARTReader() {
     set_file_handle(NULL);
 
     if (_event_id != 0) {
-        _queue.cancel(_event_id);
+        _queue->cancel(_event_id);
         _event_id = 0;
     }
 }
@@ -133,7 +133,7 @@ void UARTReader::reset_buffer() {
 
 void UARTReader::rx_irq() {  // ISR
     if (_event_id == 0) {
-        _event_id = _queue.call(callback(this, &UARTReader::process));
+        _event_id = _queue->call(callback(this, &UARTReader::process));
     }
 }
 
