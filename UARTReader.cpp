@@ -62,7 +62,11 @@ bool UARTReader::fill_buffer() {
     int count = poll(&fhs, 1, poll_timeout());
 
     if (count > 0 && (fhs.revents & POLLIN)) {
-        ssize_t len = _fileHandle->read(_recv_buff + _recv_len, sizeof(_recv_buff) - _recv_len);
+        ssize_t len = 0;
+
+        lock();
+        len = _fileHandle->read(_recv_buff + _recv_len, sizeof(_recv_buff) - _recv_len);
+        unlock();
 
         if (len > 0) {
             _recv_len += len;
@@ -119,7 +123,10 @@ void UARTReader::process() {
 
 ssize_t UARTReader::read_bytes(char *buf, size_t len) {
     if (_recv_len > 0) {
+        lock();
         memcpy(buf, _recv_buff, (len > _recv_len ? _recv_len : len));
+        unlock();
+
         return (len > _recv_len ? _recv_len : len);
     }
 
@@ -128,7 +135,9 @@ ssize_t UARTReader::read_bytes(char *buf, size_t len) {
 
 void UARTReader::reset_buffer() {
     _recv_len = 0;
+    lock();
     memset(_recv_buff, 0, sizeof(_recv_buff));
+    unlock();
 }
 
 void UARTReader::rx_irq() {  // ISR
@@ -143,4 +152,12 @@ void UARTReader::set_file_handle(FileHandle *fh) {
 
 void UARTReader::set_timeout(uint32_t timeout) {
     _timeout = timeout;
+}
+
+void UARTReader::lock() {
+    _mutex.lock();
+}
+
+void UARTReader::unlock() {
+    _mutex.unlock();
 }

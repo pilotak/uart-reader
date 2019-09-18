@@ -43,6 +43,7 @@ class UARTReader {
   private:
     EventQueue *_queue;
     Callback<void()> _callback;
+    Mutex    _mutex;
     char     _recv_buff[MBED_CONF_UARTREADER_BUFF_SIZE];
     int      _event_id;
     uint32_t _timeout;
@@ -54,6 +55,8 @@ class UARTReader {
     void process();
     void reset_buffer();
     void rx_irq();
+    void lock();
+    void unlock();
 };
 
 #endif  // UARTREADER_H
