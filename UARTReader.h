@@ -25,6 +25,7 @@ SOFTWARE.
 #ifndef UARTREADER_H
 #define UARTREADER_H
 
+#include <algorithm>
 #include "mbed.h"
 
 class UARTReader {
@@ -32,10 +33,10 @@ class UARTReader {
     UARTReader(FileHandle *fh, EventQueue *queue);
     virtual ~UARTReader();
     void attach(Callback<void()> function);
-    void init();
-    ssize_t read_bytes(char *buf, size_t len);
+    void init(char *buffer, size_t buffer_len);
     void set_file_handle(FileHandle *fh);
     void set_timeout(uint32_t timeout);
+    size_t test;
 
   protected:
     FileHandle *_fileHandle;
@@ -43,20 +44,20 @@ class UARTReader {
   private:
     EventQueue *_queue;
     Callback<void()> _callback;
-    Mutex    _mutex;
+    Mutex _mutex;
     char     _recv_buff[MBED_CONF_UARTREADER_BUFF_SIZE];
     int      _event_id;
     uint32_t _timeout;
     uint64_t _start_time;
     size_t   _recv_len;
+    size_t   _buffer_len;
+    char     *_buffer;
 
     bool fill_buffer();
     int  poll_timeout();
     void process();
     void reset_buffer();
     void rx_irq();
-    void lock();
-    void unlock();
 };
 
 #endif  // UARTREADER_H

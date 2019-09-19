@@ -31,7 +31,10 @@ UARTReader::UARTReader(FileHandle *fh, EventQueue *queue):
     _event_id(0),
     _timeout(MBED_CONF_UARTREADER_DEFAULT_TIMEOUT),
     _start_time(0),
-    _recv_len(0) {
+    _recv_len(0),
+    _buffer_len(0),
+    _buffer(NULL),
+    test(0) {
     set_file_handle(fh);
     reset_buffer();
 }
@@ -59,14 +62,12 @@ bool UARTReader::fill_buffer() {
     pollfh fhs;
     fhs.fh = _fileHandle;
     fhs.events = POLLIN;
+
     int count = poll(&fhs, 1, poll_timeout());
 
     if (count > 0 && (fhs.revents & POLLIN)) {
-        ssize_t len = 0;
 
-        lock();
-        len = _fileHandle->read(_recv_buff + _recv_len, sizeof(_recv_buff) - _recv_len);
-        unlock();
+        ssize_t len = _fileHandle->read(_recv_buff + _recv_len, sizeof(_recv_buff) - _recv_len);
 
         if (len > 0) {
             _recv_len += len;
@@ -77,8 +78,10 @@ bool UARTReader::fill_buffer() {
     return false;
 }
 
-void UARTReader::init() {
+void UARTReader::init(char *buffer, size_t buffer_len) {
     reset_buffer();
+    _buffer = buffer;
+    _buffer_len = buffer_len;
 
     _fileHandle->set_blocking(false);
     _fileHandle->sigio(callback(this, &UARTReader::rx_irq));
@@ -98,52 +101,52 @@ int UARTReader::poll_timeout() {
         timeout = _start_time + _timeout - now;
     }
 
+    printf("timeout: %i\n", timeout);
+
     return timeout;
 }
 
 void UARTReader::process() {
+    printf("process\n");
     if (_fileHandle->readable()) {
-        while (true) {
-            if (!fill_buffer()) {
-                if (_callback) {
-                    _callback.call();
+        if (_mutex.trylock()) {
+            while (true) {
+                if (!fill_buffer()) {
+                    //test = _recv_len;
+
+                    if (_buffer != NULL) {
+                        //memset(_buffer, 0, _recv_len);
+                        //memcpy(_buffer, _recv_buff, _recv_len);
+                    }
+
+                    if (_callback) {
+                        _callback.call();
+                    }
+
+
+                    reset_buffer();
+
+                    break;
                 }
 
-                reset_buffer();
-
-                break;
+                _start_time = Kernel::get_ms_count();
             }
-
-            _start_time = Kernel::get_ms_count();
+            _mutex.unlock();
         }
     }
 
     _event_id = 0;
 }
 
-ssize_t UARTReader::read_bytes(char *buf, size_t len) {
-    if (_recv_len > 0) {
-        lock();
-        memcpy(buf, _recv_buff, (len > _recv_len ? _recv_len : len));
-        unlock();
-
-        return (len > _recv_len ? _recv_len : len);
-    }
-
-    return 0;
-}
-
 void UARTReader::reset_buffer() {
     _recv_len = 0;
-    lock();
     memset(_recv_buff, 0, sizeof(_recv_buff));
-    unlock();
 }
 
 void UARTReader::rx_irq() {  // ISR
-    if (_event_id == 0) {
+    //if (_event_id == 0) {
         _event_id = _queue->call(callback(this, &UARTReader::process));
-    }
+    //}
 }
 
 void UARTReader::set_file_handle(FileHandle *fh) {
@@ -152,12 +155,4 @@ void UARTReader::set_file_handle(FileHandle *fh) {
 
 void UARTReader::set_timeout(uint32_t timeout) {
     _timeout = timeout;
-}
-
-void UARTReader::lock() {
-    _mutex.lock();
-}
-
-void UARTReader::unlock() {
-    _mutex.unlock();
 }
