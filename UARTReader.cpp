@@ -50,7 +50,6 @@ UARTReader::~UARTReader() {
 
     if (_event_id != 0) {
         _queue->cancel(_event_id);
-        _event_id = 0;
     }
 }
 
@@ -134,8 +133,6 @@ void UARTReader::process() {
             _mutex.unlock();
         }
     }
-
-    _event_id = 0;
 }
 
 void UARTReader::reset_buffer() {
@@ -144,9 +141,7 @@ void UARTReader::reset_buffer() {
 }
 
 void UARTReader::rx_irq() {  // ISR
-    //if (_event_id == 0) {
-        _event_id = _queue->call(callback(this, &UARTReader::process));
-    //}
+    _event_id = _queue->call(callback(this, &UARTReader::process));
 }
 
 void UARTReader::set_file_handle(FileHandle *fh) {
